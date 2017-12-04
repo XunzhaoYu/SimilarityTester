@@ -34,15 +34,20 @@ for f in fileList:
         srcData = ""
         afterMain = False
         labels = []
+        colonPos = 0
 
         fileLines = srcFile.readlines()
         for line in fileLines:
-            # ignore .data section
+            # detect data section:
             if not afterMain:
-                # afterMain = (line.strip()[0:5] == "main:")
+                # detect global main:
                 if line.find("main") != -1:
                     afterMain = True
-
+                # detect data string, and record them in labels
+                elif line.find(":") != -1:
+                    temp = line.strip()
+                    colonPos = temp.find(":")
+                    labels.append(temp[0:colonPos])
             # start process main code
             else:
                 # delete comments
@@ -52,9 +57,10 @@ for f in fileList:
 
                 # record labels
                 if line.find(":") != -1:
-                    temp = line.strip()
-                    labels.append(temp[0:len(temp) - 1])
-                    line = ""
+                        temp = line.strip()
+                        colonPos = temp.find(":")
+                        labels.append(temp[0:colonPos])
+                        line = temp[colonPos:len(line)]
 
                 # add lines into data
                 srcData = srcData + line
@@ -64,13 +70,11 @@ for f in fileList:
 ###        print labelNum
 
         swap = True
-        while swap:
-            swap = False
-            for i in range(1, labelNum):
-                if swap:
-                    break
-                else:
-                    swap = False
+        for i in range(1, labelNum):
+            if not swap:
+                break
+            else:
+                swap = False
                 for j in range(0, labelNum - i):
                     if len(labels[j]) < len(labels[j + 1]):
                         temp = labels[j]
@@ -83,7 +87,9 @@ for f in fileList:
             srcData = srcData.replace(label, "")
 
         # abbreviate special instruction: syscall
-        srcData = srcData.replace("syscall", "sys")
+        srcData = srcData.replace("syscall", "sy")
+        srcData = srcData.replace("move", "mo")
+        srcData = srcData.replace("zero", "ze")
 
         # delete all space, comma
         srcData = srcData.replace(",", "").replace(";", "")
